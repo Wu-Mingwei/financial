@@ -1,16 +1,14 @@
 ---
 title: "financial analysis"
 author: "Mingwei Wu"
-output:
-  pdf_document: default
-  html_notebook: default
+output: rmarkdown::github_document
 ---
 
 
 # Data Description
 ## first_coloumn: Company represents sample companies
 ## second_column: Time shows different time periods that data belongs to. Time series length varies between 1 to 14 for each company
-## third_column: Financial Distress is the target variable. if it is greater than 0.5 the company should be considered as healthy(0). otherwise, it would be regareded as financially distressed (1)
+## third_column: Financial Distress is the target variable. if it is greater than 0.5 the company should be considered as healthy(0). otherwise, it would be regarded as financially distressed (1)
 ## rest_column: the features denoted by x1 to x83. are some financial and non-financial characteristics of the sampled companies.
 
 # Goal
@@ -55,7 +53,7 @@ data1<-data[complete.cases(data),]
 dim(data1)
 ```
 
-##plot the relationship betweeen time and financial_distress
+### plot the relationship betweeen time and financial_distress
 ```{r}
 data1%>%
   ggplot(aes(Time,financial_distress))+geom_point(color="blue")
@@ -84,7 +82,8 @@ boxplot(data1[4:86]) # most outliers
 data1<-data1%>%
   mutate(distress = ifelse(financial_distress > -0.5 ,0,1))
 data1%>%
-  select(Company,Time,financial_distress,distress)
+  select(Company,Time,financial_distress,distress)%>%
+  head()
 ```
 ```{r}
 data1$distress<-as.factor(data1$distress)

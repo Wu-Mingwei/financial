@@ -1,0 +1,97 @@
+---
+title: "financial analysis"
+author: "Mingwei Wu"
+output: html_notebook
+---
+
+
+# Data Description
+## first_coloumn: Company represents sample companies
+## second_column: Time shows different time periods that data belongs to. Time series length varies between 1 to 14 for each company
+## third_column: Financial Distress is the target variable. if it is greater than 0.5 the company should be considered as healthy(0). otherwise, it would be regareded as financially distressed (1)
+## rest_column: the features denoted by x1 to x83. are some financial and non-financial characteristics of the sampled companies.
+
+# Goal
+## checking the dataframe which features are most indicative of financial distress?
+## what type of machine learning models perform best of this dataset.
+
+
+
+```{r}
+library(DataExplorer)
+library(caret)
+library(knitr)
+library(tidyverse)
+library(dplyr)
+library(ggcorrplot)
+library(ggplot2) ## load the package in R
+```
+
+```{r}
+data<-read.csv("Financial Distress.csv",header = TRUE)
+head(data)
+```
+
+```{r}
+data<-data%>%
+  rename(
+  company = Company,
+  time = Time,
+  financial_distress=Financial.Distress
+)
+```
+```{r}
+names(data)
+```
+```{r}
+head(data)
+```
+```{r}
+data1<-data[complete.cases(data),]
+dim(data1)
+```
+
+##plot the relationship betweeen time and financial_distress
+```{r}
+data1%>%
+  ggplot(aes(time,financial_distress))+geom_point(color="blue")
+```
+```{r}
+ggcorrplot(cor(data1))
+```
+
+```{r}
+plot_histogram(data1)
+```
+```{r}
+summary(data1[1:3])
+```
+```{r}
+summary(data1[4:86])
+```
+```{r}
+pairs(data1[1:3])
+```
+
+```{r}
+boxplot(data1[4:86]) # most outliers 
+```
+```{r}
+data1<-data1%>%
+  select(company,time, financial_distress)%>%
+  mutate(distress = ifelse(financial_distress > 0.5 ,1,0))
+data1
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

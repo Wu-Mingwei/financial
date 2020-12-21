@@ -1,7 +1,9 @@
 ---
 title: "financial analysis"
 author: "Mingwei Wu"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 
@@ -24,6 +26,12 @@ library(knitr)
 library(tidyverse)
 library(dplyr)
 library(ggcorrplot)
+library(gmodels)
+library(ROSE)
+library(pROC)
+library(plyr)
+library(randomForest)
+library(caTools)
 library(ggplot2) ## load the package in R
 ```
 
@@ -31,18 +39,14 @@ library(ggplot2) ## load the package in R
 data<-read.csv("Financial Distress.csv",header = TRUE)
 head(data)
 ```
-
-```{r}
-data<-data%>%
-  rename(
-  company = Company,
-  time = Time,
-  financial_distress=Financial.Distress
-)
-```
 ```{r}
 names(data)
 ```
+
+```{r}
+names(data)[3] <- "financial_distress"
+```
+
 ```{r}
 head(data)
 ```
@@ -54,7 +58,7 @@ dim(data1)
 ##plot the relationship betweeen time and financial_distress
 ```{r}
 data1%>%
-  ggplot(aes(time,financial_distress))+geom_point(color="blue")
+  ggplot(aes(Time,financial_distress))+geom_point(color="blue")
 ```
 ```{r}
 ggcorrplot(cor(data1))
@@ -78,10 +82,75 @@ boxplot(data1[4:86]) # most outliers
 ```
 ```{r}
 data1<-data1%>%
-  select(company,time, financial_distress)%>%
-  mutate(distress = ifelse(financial_distress > 0.5 ,1,0))
-data1
+  mutate(distress = ifelse(financial_distress > -0.5 ,0,1))
+data1%>%
+  select(Company,Time,financial_distress,distress)
 ```
+```{r}
+data1$distress<-as.factor(data1$distress)
+```
+
+```{r}
+data1%>%
+  ggplot(aes(distress))+geom_bar(color="blue",
+                                 fill="red")
+```
+
+```{r}
+glm<-glm(financial_distress~.,data=data1)
+summary(glm)  #build up the logistic regression, and most column x is insignificant
+```
+```{r}
+glm1<-glm(financial_distress~Company+Time,data=data1)
+summary(glm1) #removed the insignificant columns then make logistic regression
+```
+```{r}
+glm1$coefficients
+```
+
+```{r}
+set.seed(123)
+sample<-createDataPartition(data1$distress,
+                            p=0.7,
+                            list=FALSE)
+train<-data1[sample,]
+test<-data1[-sample,] #split data into train and test by 70% and 30%
+```
+```{r}
+dim(train);dim(test)
+```
+```{r}
+balance<-ovun.sample(distress~.,data=train,
+                     p=0.5,seed=1,
+                     method="both")$data
+summary(balance$distress)
+```
+
+
+```{r}
+rf1<-randomForest(as.factor(train$distress)~.,train,ntree=100)
+rf1
+```
+
+```{r}
+pred<-predict(rf1, test) #predictions
+summary(pred)
+```
+```{r}
+confusionMatrix(pred,as.factor(test$distress),positive="1") #matrix table
+```
+```{r}
+roc<-predict(rf1,test,type="prob")
+roc_all<-roc(test$distress, roc[,2])
+auc<-as.numeric(round(roc_all$auc,4))
+plot(roc_all,lwd=2,col="blue")
+text(0.6,0.7,"AUC=")
+text(0.4,0.7,auc)
+```
+
+
+
+
 
 
 
